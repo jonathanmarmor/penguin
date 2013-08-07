@@ -55,9 +55,11 @@ def get_score():
 
     score.instruments = {}
     score.parts_by_inst = {}
+    score.instruments_by_name = {}
     score.parts_list = []
     for i in score.inst_list:
         abbr = i.instrumentAbbreviation
+        score.instruments_by_name[i.nickname] = i
         part = music21.stream.Part()
         part.insert(0, i)
         part.id = abbr
@@ -131,6 +133,8 @@ class Section1(object):
     def __init__(self, piece, num_beats):
         self.piece = piece
         self.num_beats = num_beats
+
+
 
 
 
