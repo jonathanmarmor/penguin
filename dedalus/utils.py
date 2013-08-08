@@ -23,3 +23,23 @@ def fibonacci(n):
 
 
 GOLDEN_MEAN = float(fibonacci(30)) / fibonacci(31)
+
+
+def divide(dur, units):
+    """Divide the length `dur` into `units` sections"""
+    if units > dur:
+        return "hey, you can't divide `dur` into a number of units greater than `dur`"
+    divs = []
+    while len(divs) < units - 1:
+        r = random.randint(1, dur - 1)
+        if r not in divs:
+            divs.append(r)
+    divs.sort()
+    divs.append(dur)
+    result = []
+    prev = 0
+    for d in divs:
+        unit = d - prev
+        result.append(unit)
+        prev = d
+    return result
