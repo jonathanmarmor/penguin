@@ -18,18 +18,18 @@ class Form(object):
         while total < self.duration:
             dur = self.choose_bar_duration()
             self.bar_durs.append(dur)
-            total = total + dur * 4
+            total = total + dur * 2
 
     def choose_bar_duration(self):
-        return random.randint(2, 7)
+        return random.randint(4, 16)
 
 
 def choose_notes(dur_to_fill):
     """Picks the material for an """
     play = random.randint(0, 5) > 0  # 5 out of 6 will play a note
     if play:
-        durs = divide(dur_to_fill * 4, 3)
-        durs = [d / 4.0 for d in durs]
+        durs = divide(dur_to_fill * 2, 3)
+        durs = [d / 2.0 for d in durs]
 
         r1 = Rest()
         r1.duration = Duration(durs[0])
@@ -74,8 +74,8 @@ def make(score):
 
 """
 TODO:
-- map out instrument ranges
-- for each instrument, identify the range shared with each other instrument
+x - map out instrument ranges
+x - for each instrument, identify the range shared with each other instrument
 - make a phrase:
     - pick the number of notes
     - for each note

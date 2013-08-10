@@ -1,10 +1,13 @@
+import sys
 import datetime
 import random
 import math
+from itertools import combinations
 
 from music21.note import Note
 from music21.pitch import Pitch
 from music21.stream import Stream, Measure, Part, Score, Opus
+from music21.meter import TimeSignature
 from music21.duration import Duration
 from music21.spanner import Glissando, Slur
 from music21.metadata import Metadata
@@ -12,7 +15,7 @@ from music21.instrument import (Piccolo, SopranoSaxophone, Viola, Violoncello,
     Trombone, ElectricGuitar)
 from music21.layout import StaffGroup
 
-from utils import GOLDEN_MEAN, scale, weighted_choice
+from utils import GOLDEN_MEAN, scale, weighted_choice, frange
 import movement_2
 
 
@@ -24,11 +27,53 @@ class Instruments(object):
     vc = Violoncello()
     tbn = Trombone()
     gtr = ElectricGuitar()
-    list = [fl, sax, vla, vc, tbn, gtr]
-    dict = {}
-    for name, inst in zip(names, list):
+    l = [fl, sax, vla, vc, tbn, gtr]
+    d = {}
+    for name, inst in zip(names, l):
         inst.nickname = name
-        dict[name] = inst
+        d[name] = inst
+
+    # lowest, highest notes
+    ranges = [
+        ('D5', 'C7'),  # Piccolo
+        ('C4', 'C6'),  # Soprano Sax
+        ('C3', 'E5'),  # Viola
+        ('C2', 'E4'),  # Cello
+        ('E2', 'B-4'),  # Trombone
+        ('E2', 'A5')  # Guitar
+    ]
+    for r, i in zip(ranges, l):
+        i.lowest_note = Pitch(r[0])
+        i.highest_note = Pitch(r[1])
+        i.all_notes = list(frange(i.lowest_note.ps, i.highest_note.ps + 1))
+        i.all_notes_24 = list(frange(i.lowest_note.ps, i.highest_note.ps + 1, 0.5))
+
+    @classmethod
+    def shared_notes(cls, instruments):
+        def f(a, b):
+            return set(a).intersection(set(b))
+        instrument_notes = [i.all_notes for i in instruments]
+        if len(instrument_notes) == 0:
+            return []
+        result = reduce(f, instrument_notes)
+        result = list(result)
+        result.sort()
+        return result
+
+    @classmethod
+    def get_unison_ensembles(cls):
+        have_shared_notes = {}
+        for n in range(2, len(cls.l)):
+            for combo in combinations(cls.l, n):
+                shared = cls.shared_notes(combo)
+                if len(shared) > 5:
+                    combo_hash = ' '.join(sorted(list([i.nickname for i in combo])))
+                    have_shared_notes[combo_hash] = {
+                        'instruments': combo,
+                        'notes': shared
+                    }
+        return have_shared_notes
+
 
 
 class Parts(object):
@@ -39,11 +84,11 @@ class Parts(object):
     vc = Part()
     tbn = Part()
     gtr = Part()
-    list = [fl, sax, vla, vc, tbn, gtr]
-    dict = {}
-    for name, part, inst in zip(names, list, Instruments.list):
+    l = [fl, sax, vla, vc, tbn, gtr]
+    d = {}
+    for name, part, inst in zip(names, l, Instruments.l):
         part.id = name
-        dict[name] = part
+        d[name] = part
         part.insert(0, inst)
 
 
@@ -102,7 +147,7 @@ class Form(object):
         self.quarter_tones_start = scale(random.random(), 0, 1, 60 * 2, 60 * 4)
 
 
-def make():
+def make_score():
     score = Score()
     score.Parts = Parts
     score.Instruments = Instruments
@@ -111,19 +156,40 @@ def make():
     timestamp = datetime.datetime.utcnow()
     score.insert(0, get_metadata(timestamp))
 
-    [score.insert(0, part) for part in Parts.list]
-    score.insert(0, StaffGroup(Parts.list))
-
-    # form
-    # notes/details
-
-    # mv1 = movement_1.make(score)
-    movement_2.make(score)
-
-    score.show()
+    [score.insert(0, part) for part in Parts.l]
+    score.insert(0, StaffGroup(Parts.l))
 
     return score
 
 
+def make_piece():
+    score = make_score()
+    # form
+    # notes/details
+
+    # mv1 = movement_1.make(score)
+    # movement_2.make(score)
+
+    return score
+
+
+def get_ranges():
+    score = make_score()
+    for inst, part in zip(score.Instruments.l, score.Parts.l):
+        measure = Measure()
+        measure.timeSignature = TimeSignature('4/4')
+        low = Note(inst.lowest_note)
+        measure.append(low)
+        high = Note(inst.highest_note)
+        measure.append(high)
+        part.append(measure)
+    return score
+
+
+
 if __name__ == '__main__':
-    make()
+    if sys.argv[1] == 'ranges':
+        score = get_ranges()
+    else:
+        score = make_piece()
+    score.show()

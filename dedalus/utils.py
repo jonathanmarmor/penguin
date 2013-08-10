@@ -43,3 +43,9 @@ def divide(dur, units):
         result.append(unit)
         prev = d
     return result
+
+
+def frange(x, y, step=1.0):
+    while x < y:
+        yield x
+        x += step
