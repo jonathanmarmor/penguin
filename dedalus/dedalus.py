@@ -64,6 +64,8 @@ class Instruments(object):
         return result
 
     def get_others_with_shared_notes(self, i):
+        if type(i) is str:
+            i = self.d[i]
         others = [self.d[n] for n in self.names if n != i.nickname]
         combos = [[i, other] for other in others]
         result = []
@@ -75,17 +77,17 @@ class Instruments(object):
         return result
 
     def get_unison_ensembles(self, min_notes=1):
-        have_shared_notes = {}
+        self.unison_ensembles = {}
         for n in range(2, len(self.l)):
             for combo in combinations(self.l, n):
                 shared = self.shared_notes(combo)
                 if len(shared) >= min_notes:
                     combo_hash = ' '.join(sorted(list([i.nickname for i in combo])))
-                    have_shared_notes[combo_hash] = {
+                    self.unison_ensembles[combo_hash] = {
                         'instruments': combo,
                         'notes': shared
                     }
-        return have_shared_notes
+        return self.unison_ensembles
 
     def who_can_play(self, ps):
         who = []
@@ -129,7 +131,7 @@ class Piece(object):
             # Make the piece
             self.make_score()
             self.choose_piece_duration()
-            # self.make_movements()
+            self.make_movements()
             self.choose_when_quarter_tones_start()
 
     def show(self):
@@ -162,8 +164,12 @@ class Piece(object):
         return md
 
     def choose_piece_duration(self):
-        """Choose the total number of beats in the piece"""
-        self.piece_duration = random.randint(450, 550)  # 7.5 - a little more than 9 minutes
+        """Choose the total number of beats in the piece
+
+        Units are quarter notes at 120 beats per minute.
+        Range is between 7.5 and a little more than 9 minutes.
+        """
+        self.piece_duration = random.randint(900, 1100)
 
     def make_movements(self):
         one, two = self.choose_movement_durations()
@@ -192,14 +198,18 @@ class Piece(object):
 
     def choose_when_quarter_tones_start(self):
         # somewhere between 2 and 4 minutes in
-        self.quarter_tones_start = scale(random.random(), 0, 1, 60 * 2, 60 * 4)
+        # in quarter notes at 120 beats per minute (ie, half seconds)
+        self.quarter_tones_start = scale(random.random(), 0, 1, 120 * 2, 120 * 4)
 
 
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1 and sys.argv[1] == 'ranges':
+    show = True
+    if 'ranges' in sys.argv:
         piece = Piece(ranges=True)
     else:
         piece = Piece()
-    piece.show()
+
+    if 'noshow' not in sys.argv:
+        piece.show()

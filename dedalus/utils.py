@@ -45,7 +45,27 @@ def divide(dur, units):
     return result
 
 
+def fill(dur):
+    """put a single duration within a larger duration with a rest at the beggining, end, or both"""
+    note_dur = random.randint(1, dur - 1)
+    start = random.randint(0, dur - note_dur)
+    rest_1_dur = start
+    rest_2_dur = dur - (start + note_dur)
+    return rest_1_dur, note_dur, rest_2_dur
+
+
 def frange(x, y, step=1.0):
     while x < y:
         yield x
         x += step
+
+
+def random_split(items):
+    len_items = len(items)
+    len_a = random.randint(1, len_items - 1)
+    len_b = len_items - len_a
+    a = random.sample(items, len_a)
+    for item in a:
+        items.remove(item)
+    b = random.sample(items, len_b)
+    return a, b
