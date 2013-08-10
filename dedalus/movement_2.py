@@ -6,19 +6,88 @@ from music21.meter import TimeSignature
 from music21.duration import Duration
 from music21.note import Note, Rest
 
-from utils import divide
+from utils import divide, weighted_choice
 
 
-class Form(object):
-    def __init__(self, duration, score):
+# class Phrase(object):
+#     """
+
+#     - pick the number of notes
+#     - for each note
+#         - generate the rhythm (choose_notes(bar_duration))
+#         - pick an instrument to play it
+#         - remove that instrument from the pool of available instruments for the first two repetitions of the phrase
+#         - pick another instrument with a shared range to hand the note to for the second two repetitions
+#         - remove the second instrument from the pool of available instruments for the second two repetitions of the phrase
+#         - pick a pitch for the note from the shared range
+#     """
+#     def __init__(self):
+#         options = range(1, 7)
+#         weights = []
+#         num_notes = weighted_choice(options, weights)
+#     def __init__(self, piece):
+#         self.piece = piece
+
+
+# class Couplet(object):
+#     def __init__(self, piece):
+#         self.piece = piece
+
+
+class Quadlet(object):
+    def __init__(self, piece):
+        self.piece = piece
+
+        options = [1, 2,  3,  4,  5,  6]
+        weights = [5, 10, 20, 30, 30, 5]
+        num_notes = weighted_choice(options, weights)
+
+
+
+
+        # all_pitches = piece.instruments.piece_range_at_least_two_instruments
+
+        # pitches = [random.choice(all_pitches) for n in range(len(num_notes))]
+
+        # for p in pitches:
+        #     instruments = self.piece.i.who_can_play(p)
+        #     couplet_1_insts =
+        #     couplet_2_insts =
+
+        # [
+        #     {  # Couplet 1
+        #         'gtr': pitch,
+        #         'fl': pitch,
+        #         ...
+        #     },
+        #     {  # Couplet 2
+
+        #     }
+        # ]
+
+
+        """
+        - pick number of notes
+        - for each note, for each couplet, pick an ensemble to play the note
+        - make sure the ensembles share a range of notes
+        """
+
+
+
+        # couplet = Couplet()
+
+
+
+
+class Movement2(object):
+    def __init__(self, duration, piece):
         self.duration = duration
 
-        self.bar_durs = []
         total = 0
-        while total < self.duration:
-            dur = self.choose_bar_duration()
-            self.bar_durs.append(dur)
-            total = total + dur * 2
+        while total < duration:
+            quadlet = Quadlet(piece)
+            total += quadlet.duration
+
 
     def choose_bar_duration(self):
         return random.randint(4, 16)
@@ -48,28 +117,28 @@ def choose_notes(dur_to_fill):
 
 
 
-def make(score):
-    form = score.form.movement_2
+# def make(score):
+#     form = score.form.movement_2
 
-    previous_dur = None
-    for dur in form.bar_durs:
+#     previous_dur = None
+#     for dur in form.bar_durs:
 
-        for part in score.Parts.list:
+#         for part in score.Parts.list:
 
-            notation = choose_notes(dur)
+#             notation = choose_notes(dur)
 
-            for n in range(4):
-                measure = Measure()
-                if n == 0 and dur != previous_dur:
-                    measure.timeSignature = TimeSignature('{}/4'.format(dur))
-                part.append(measure)
+#             for n in range(4):
+#                 measure = Measure()
+#                 if n == 0 and dur != previous_dur:
+#                     measure.timeSignature = TimeSignature('{}/4'.format(dur))
+#                 part.append(measure)
 
-                notation_copy = deepcopy(notation)
+#                 notation_copy = deepcopy(notation)
 
-                for note in notation_copy:
-                    measure.append(note)
+#                 for note in notation_copy:
+#                     measure.append(note)
 
-        previous_dur = dur
+#         previous_dur = dur
 
 
 """

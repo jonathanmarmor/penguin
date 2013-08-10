@@ -20,36 +20,39 @@ import movement_2
 
 
 class Instruments(object):
-    names = ['fl', 'sax', 'vla', 'vc', 'tbn', 'gtr']
-    fl = Piccolo()
-    sax = SopranoSaxophone()
-    vla = Viola()
-    vc = Violoncello()
-    tbn = Trombone()
-    gtr = ElectricGuitar()
-    l = [fl, sax, vla, vc, tbn, gtr]
-    d = {}
-    for name, inst in zip(names, l):
-        inst.nickname = name
-        d[name] = inst
+    def __init__(self):
+        self.names = ['fl', 'sax', 'vla', 'vc', 'tbn', 'gtr']
+        self.fl = fl =Piccolo()
+        self.sax = sax = SopranoSaxophone()
+        self.vla = vla = Viola()
+        self.vc = vc =Violoncello()
+        self.tbn = tbn = Trombone()
+        self.gtr = gtr = ElectricGuitar()
+        self.l = [fl, sax, vla, vc, tbn, gtr]
+        self.d = {}
+        for name, inst in zip(self.names, self.l):
+            inst.nickname = name
+            self.d[name] = inst
 
-    # lowest, highest notes
-    ranges = [
-        ('D5', 'C7'),  # Piccolo
-        ('C4', 'C6'),  # Soprano Sax
-        ('C3', 'E5'),  # Viola
-        ('C2', 'E4'),  # Cello
-        ('E2', 'B-4'),  # Trombone
-        ('E2', 'A5')  # Guitar
-    ]
-    for r, i in zip(ranges, l):
-        i.lowest_note = Pitch(r[0])
-        i.highest_note = Pitch(r[1])
-        i.all_notes = list(frange(i.lowest_note.ps, i.highest_note.ps + 1))
-        i.all_notes_24 = list(frange(i.lowest_note.ps, i.highest_note.ps + 1, 0.5))
+        # lowest, highest notes
+        ranges = [
+            ('D5', 'C7'),  # Piccolo
+            ('C4', 'C6'),  # Soprano Sax
+            ('C3', 'E5'),  # Viola
+            ('C2', 'E4'),  # Cello
+            ('E2', 'B-4'),  # Trombone
+            ('E2', 'A5')  # Guitar
+        ]
+        for r, i in zip(ranges, self.l):
+            i.lowest_note = Pitch(r[0])
+            i.highest_note = Pitch(r[1])
+            i.all_notes = list(frange(i.lowest_note.ps, i.highest_note.ps + 1))
+            i.all_notes_24 = list(frange(i.lowest_note.ps, i.highest_note.ps + 1, 0.5))
 
-    @classmethod
-    def shared_notes(cls, instruments):
+        self.piece_range = list(frange(Pitch('E2').ps, Pitch('C7').ps + 1))
+        self.piece_range_at_least_two_instruments = list(frange(Pitch('E2').ps, Pitch('C6').ps + 1))
+
+    def shared_notes(self, instruments):
         def f(a, b):
             return set(a).intersection(set(b))
         instrument_notes = [i.all_notes for i in instruments]
@@ -60,13 +63,23 @@ class Instruments(object):
         result.sort()
         return result
 
-    @classmethod
-    def get_unison_ensembles(cls):
+    def get_others_with_shared_notes(self, i):
+        others = [self.d[n] for n in self.names if n != i.nickname]
+        combos = [[i, other] for other in others]
+        result = []
+        for combo in combos:
+            shared = self.shared_notes(combo)
+            len_shared = len(shared)
+            if len_shared:
+                result.append((combo[-1], shared))
+        return result
+
+    def get_unison_ensembles(self, min_notes=1):
         have_shared_notes = {}
-        for n in range(2, len(cls.l)):
-            for combo in combinations(cls.l, n):
-                shared = cls.shared_notes(combo)
-                if len(shared) > 5:
+        for n in range(2, len(self.l)):
+            for combo in combinations(self.l, n):
+                shared = self.shared_notes(combo)
+                if len(shared) >= min_notes:
                     combo_hash = ' '.join(sorted(list([i.nickname for i in combo])))
                     have_shared_notes[combo_hash] = {
                         'instruments': combo,
@@ -74,44 +87,79 @@ class Instruments(object):
                     }
         return have_shared_notes
 
+    def who_can_play(self, ps):
+        who = []
+        for i in self.l:
+            if ps in i.all_notes:
+                who.append(i.nickname)
+        return who
 
 
 class Parts(object):
-    names = ['fl', 'sax', 'vla', 'vc', 'tbn', 'gtr']
-    fl = Part()
-    sax = Part()
-    vla = Part()
-    vc = Part()
-    tbn = Part()
-    gtr = Part()
-    l = [fl, sax, vla, vc, tbn, gtr]
-    d = {}
-    for name, part, inst in zip(names, l, Instruments.l):
-        part.id = name
-        d[name] = part
-        part.insert(0, inst)
+    def __init__(self, instruments):
+        self.names = ['fl', 'sax', 'vla', 'vc', 'tbn', 'gtr']
+        self.fl = fl = Part()
+        self.sax = sax = Part()
+        self.vla = vla = Part()
+        self.vc = vc = Part()
+        self.tbn = tbn = Part()
+        self.gtr = gtr = Part()
+        self.l = [fl, sax, vla, vc, tbn, gtr]
+        self.d = {}
+        for name, part, inst in zip(self.names, self.l, instruments.l):
+            part.id = name
+            self.d[name] = part
+            part.insert(0, inst)
 
 
-def get_metadata(timestamp, movement_number=None, movement_name=None):
-    md = Metadata()
-    md.title = 'Penguin Atlas of African History'
-    md.composer = 'Jonathan Marmor'
-    md.date = timestamp.strftime('%Y/%m/%d')
-    md.groupTitle = 'Dedalus'
-    md.dedication = 'Didier Aschour'
-    if movement_number:
-        md.movementNumber = movement_number
-    if movement_name:
-        md.movementName = movement_name
-    return md
+class Piece(object):
+    def __init__(self, ranges=False):
+        if ranges:
+            # Don't make a piece, just show the instrument ranges
+            self.make_score()
+            for inst, part in zip(self.instruments.l, self.parts.l):
+                measure = Measure()
+                measure.timeSignature = TimeSignature('4/4')
+                low = Note(inst.lowest_note)
+                measure.append(low)
+                high = Note(inst.highest_note)
+                measure.append(high)
+                part.append(measure)
+        else:
+            # Make the piece
+            self.make_score()
+            self.choose_piece_duration()
+            # self.make_movements()
+            self.choose_when_quarter_tones_start()
 
+    def show(self):
+        self.score.show()
 
-class Form(object):
-    def __init__(self, score):
-        self.score = score
-        self.choose_piece_duration()
-        self.make_movements()
-        self.choose_when_quarter_tones_start()
+    def make_score(self):
+        score = self.score = Score()
+        self.instruments = self.i = Instruments()
+        self.parts = Parts(self.i)
+
+        timestamp = datetime.datetime.utcnow()
+        score.insert(0, self.get_metadata(timestamp))
+
+        [score.insert(0, part) for part in self.parts.l]
+        score.insert(0, StaffGroup(self.parts.l))
+
+        return score
+
+    def get_metadata(self, timestamp, movement_number=None, movement_name=None):
+        md = Metadata()
+        md.title = 'Penguin Atlas of African History'
+        md.composer = 'Jonathan Marmor'
+        md.date = timestamp.strftime('%Y/%m/%d')
+        md.groupTitle = 'Dedalus'
+        md.dedication = 'Didier Aschour'
+        if movement_number:
+            md.movementNumber = movement_number
+        if movement_name:
+            md.movementName = movement_name
+        return md
 
     def choose_piece_duration(self):
         """Choose the total number of beats in the piece"""
@@ -119,8 +167,8 @@ class Form(object):
 
     def make_movements(self):
         one, two = self.choose_movement_durations()
-        # self.movement_1 = movement_1.Form(one, self.score)
-        self.movement_2 = movement_2.Form(two, self.score)
+        # self.movement_1 = movement_1.Movement1(one, self)
+        self.movement_2 = movement_2.Movement2(two, self)
 
     def choose_movement_durations(self):
         """Choose the durations of the two major sections of the piece.
@@ -147,49 +195,11 @@ class Form(object):
         self.quarter_tones_start = scale(random.random(), 0, 1, 60 * 2, 60 * 4)
 
 
-def make_score():
-    score = Score()
-    score.Parts = Parts
-    score.Instruments = Instruments
-    score.form = Form(score)
-
-    timestamp = datetime.datetime.utcnow()
-    score.insert(0, get_metadata(timestamp))
-
-    [score.insert(0, part) for part in Parts.l]
-    score.insert(0, StaffGroup(Parts.l))
-
-    return score
-
-
-def make_piece():
-    score = make_score()
-    # form
-    # notes/details
-
-    # mv1 = movement_1.make(score)
-    # movement_2.make(score)
-
-    return score
-
-
-def get_ranges():
-    score = make_score()
-    for inst, part in zip(score.Instruments.l, score.Parts.l):
-        measure = Measure()
-        measure.timeSignature = TimeSignature('4/4')
-        low = Note(inst.lowest_note)
-        measure.append(low)
-        high = Note(inst.highest_note)
-        measure.append(high)
-        part.append(measure)
-    return score
-
 
 
 if __name__ == '__main__':
-    if sys.argv[1] == 'ranges':
-        score = get_ranges()
+    if len(sys.argv) > 1 and sys.argv[1] == 'ranges':
+        piece = Piece(ranges=True)
     else:
-        score = make_piece()
-    score.show()
+        piece = Piece()
+    piece.show()
