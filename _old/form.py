@@ -44,16 +44,26 @@ def fibonacci(n):
 
 def validate(array):
     # Remove boring ones
-    len_uniques = len(set(array))
+    uniques = set(array)
+    len_uniques = len(uniques)
     if len_uniques < 2:
         return False
     # Remove overly interesting ones
-    if len_uniques > 4:
+    if len_uniques > 5:
         return False
     # Remove illegal ones
     for index, item in enumerate(array[1:]):
         if item not in array[:index + 1] and item - 1 not in array[:index + 1]:
             return False
+
+    # Remove ones where 0 isn't repeated after 1 happens, 1 isn't repeated after 2 happens,
+    # 2 isn't repeated after 3 happens, or 3 isn't repeated after 4 happens
+    uniques = list(uniques)
+    uniques.sort()
+    good = any(a in array[array.index(b) + 1:] for a, b in zip(uniques[:-1], uniques[1:]))
+    if not good:
+        return False
+
     return True
 
 

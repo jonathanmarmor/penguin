@@ -4,7 +4,7 @@ import random
 import math
 from itertools import combinations
 
-from music21.note import Note
+from music21.note import Note, Rest
 from music21.pitch import Pitch
 from music21.stream import Stream, Measure, Part, Score, Opus
 from music21.meter import TimeSignature
@@ -15,7 +15,8 @@ from music21.instrument import (Piccolo, SopranoSaxophone, Viola, Violoncello,
     Trombone, ElectricGuitar)
 from music21.layout import StaffGroup
 
-from utils import GOLDEN_MEAN, scale, weighted_choice, frange
+from utils import GOLDEN_MEAN, scale, frange
+import movement_1
 import movement_2
 
 
@@ -173,8 +174,8 @@ class Piece(object):
 
     def make_movements(self):
         one, two = self.choose_movement_durations()
-        # self.movement_1 = movement_1.Movement1(one, self)
-        self.movement_2 = movement_2.Movement2(two, self)
+        self.movement_1 = movement_1.Movement1(one, self)
+        # self.movement_2 = movement_2.Movement2(two, self)
 
     def choose_movement_durations(self):
         """Choose the durations of the two major sections of the piece.

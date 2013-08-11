@@ -80,3 +80,15 @@ def count_intervals(harmony):
         counter[b - a] += 1
     del counter[12]
     return counter
+
+
+def subdivide(n, biggest=4):
+    """Break down `n` into as many units the size of `biggest` as possible then tack on the remainder"""
+    result = []
+    bigs = int(n) / biggest
+    for r in range(bigs):
+        result.append(biggest)
+    remainder = n % biggest
+    if remainder:
+        result.append(remainder)
+    return result

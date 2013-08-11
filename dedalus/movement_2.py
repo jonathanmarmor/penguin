@@ -7,7 +7,7 @@ from music21.duration import Duration
 from music21.note import Note, Rest
 from music21.pitch import Pitch
 
-from utils import fill, count_intervals
+from utils import fill, count_intervals, subdivide
 
 
 class Phrase(object):
@@ -30,7 +30,22 @@ class Phrase(object):
 
             measure = Measure()
             if self.first and quadlet.previous_phrase_duration != self.duration:
-                measure.timeSignature = TimeSignature('{}/4'.format(self.duration))
+                ts = TimeSignature('{}/4'.format(self.duration))
+
+                # ts.beatSequence.subdivideNestedHierarchy(3)
+
+                # ts.beatSequence.partitionByList(subdivide(self.duration, 4))
+                # for i, b in enumerate(ts.beatSequence):
+                #     if b.duration.quarterLength == 4:
+                #         ts.beatSequence[i] = b.subdivide(2)
+                #         # ts.beatSequence[i][0] = b.subdivide(2)
+                #         # ts.beatSequence[i][1] = b.subdivide(2)
+                #     elif b.duration.quarterLength == 3:
+                #         ts.beatSequence[i] = b.subdivideByList([2, 1])
+                #         # ts.beatSequence[i][0] = ts.beatSequence[i].subdivide(2)
+                #     elif b.duration.quarterLength == 2:
+                #         ts.beatSequence[i] = b.subdivide(2)
+                measure.timeSignature = ts
 
             r1_dur, note_dur, r2_dur = line['rhythm']
 
@@ -53,6 +68,9 @@ class Phrase(object):
                 r2.duration = Duration(r2_dur)
                 measure.append(r2)
 
+            # fixed_measure = measure.sliceByBeat()
+            # part.append(fixed_measure)
+
             part.append(measure)
 
         # Put full measure rests in instruments that aren't playing
@@ -65,11 +83,29 @@ class Phrase(object):
 
             measure = Measure()
             if self.first and quadlet.previous_phrase_duration != self.duration:
-                measure.timeSignature = TimeSignature('{}/4'.format(self.duration))
+                ts = TimeSignature('{}/4'.format(self.duration))
+
+                # ts.beatSequence.subdivideNestedHierarchy(3)
+
+                # ts.beatSequence.partitionByList(subdivide(self.duration, 4))
+                # for i, b in enumerate(ts.beatSequence):
+                #     if b.duration.quarterLength == 4:
+                #         ts.beatSequence[i] = b.subdivide(2)
+                #         # ts.beatSequence[i][0] = b.subdivide(2)
+                #         # ts.beatSequence[i][1] = b.subdivide(2)
+                #     elif b.duration.quarterLength == 3:
+                #         ts.beatSequence[i] = b.subdivideByList([2, 1])
+                #         # ts.beatSequence[i][0] = ts.beatSequence[i].subdivide(2)
+                #     elif b.duration.quarterLength == 2:
+                #         ts.beatSequence[i] = b.subdivide(2)
+                measure.timeSignature = ts
 
             r = Rest()
             r.duration = Duration(self.duration)
             measure.append(r)
+
+            # fixed_measure = measure.sliceByBeat()
+            # part.append(fixed_measure)
 
             part.append(measure)
 
