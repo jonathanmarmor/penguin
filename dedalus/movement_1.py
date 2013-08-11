@@ -29,7 +29,7 @@ class Song(object):
             solo_ensemble_hash = random.choice(movement.solo_ensemble_options.keys())
             soloists = movement.solo_ensemble_options[solo_ensemble_hash]['instruments']
             solo_ensemble_names = [s.nickname for s in soloists]
-            solo_ensemble_shared_notes = movement.solo_ensemble_options[solo_ensemble_hash]['notes']
+            self.solo_ensemble_shared_notes = movement.solo_ensemble_options[solo_ensemble_hash]['notes']
             # Remove chosen ensemble from options
             del movement.solo_ensemble_options[solo_ensemble_hash]
 
@@ -37,6 +37,7 @@ class Song(object):
             for soloist in solo_ensemble_names:
                 instrument_opts.remove(soloist)
             self.accompanists = [piece.i.d[name] for name in instrument_opts]
+            # TODO not everyone should accompany.  Some should sit out.
 
         else:
             # who plays, who sits out?
@@ -44,39 +45,57 @@ class Song(object):
             ensemble_names = random.sample(instrument_opts, ensemble_size)
             self.ensemble = [piece.i.d[name] for name in ensemble_names]
 
-        phrase_types = []
-        for segment_type in set(form):
-            if segment_type == 0:
-                phrase_type = VerseType()
-            if segment_type == 1:
-                phrase_type = ChorusType()
-            if segment_type == 2:
-                phrase_type = BridgeType()
-            if segment_type == 3:
-                phrase_type = BreakdownType()
-            if segment_type == 4:
-                # TODO is this used?
-                phrase_type = FurtherBreakdownType()
 
-            phrase_types.append(phrase_type)
+        # make a phrase for each unique part of the form (eg, an `a` in `abacabac`)
+        unique_phrases = []
+        for f in set(form):
+            if self.type == 'solo':
+                unique_phrases.append(SoloPhrase())
+            elif self.type == 'ensemble':
+                unique_phrases.append(EnsemblePhrase())
 
-        for segment in form:
-            phrase = phrase_types[segment].make_phrase()
+        # Copy the phrases in the order specified by form
+        phrases = []
+        for f in form:
+            phrases.append(unique_phrases[f])
+
+        # TODO render phrases into music21 objects
 
 
-class VerseType(object):
-    pass
+class Phrase(object):
+    """
+    - instruments can have one of two types of material: solo or accompaniment
+    - solo has more notes, ornaments, and is less tied to the meter
+    - accomp has very simple rhythms that outline the meter, no ornaments, and generally longer duration notes
+    - if song.type is solo:
+        - the soloist group all play a solo part in unison
+        - all the remaining instruments play accompaniment parts. maybe some in rhythmic unison?
+    - if song.type is ensemble:
+        - everyone plays a different solo part
 
-class ChorusType(object):
-    pass
 
-class BridgeType(object):
-    pass
+    once we have all the rhythms (and maybe contours?) then use the harmony validator from movement 2 to choose the pitches
+    pitch options should be within a small range of the previous note, perhaps with the smallest intervals preferred
 
-class BreakdownType(object):
-    pass
+    """
 
-class FurtherBreakdownType(object):
+    def __init__(self):
+        pass
+
+    def copy(self):
+        pass
+
+    def make_solo(self):
+        """used by both SoloPhrase and EnsemblePhrase"""
+        pass
+
+
+class SoloPhrase(Phrase):
+    def make_accompaniment(self):
+        pass
+
+
+class EnsemblePhrase(Phrase):
     pass
 
 
