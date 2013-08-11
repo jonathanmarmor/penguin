@@ -1,11 +1,13 @@
 import random
+from collections import defaultdict
 
 from music21.stream import Measure
 from music21.meter import TimeSignature
 from music21.duration import Duration
 from music21.note import Note, Rest
+from music21.pitch import Pitch
 
-from utils import fill
+from utils import fill, count_intervals
 
 
 class Phrase(object):
@@ -37,7 +39,12 @@ class Phrase(object):
                 r1.duration = Duration(r1_dur)
                 measure.append(r1)
 
-            note = Note(line['pitch'])
+            p = Pitch(line['pitch'])
+            # Force all flats
+            if p.accidental.name == 'sharp':
+                p = p.getEnharmonic()
+
+            note = Note(p)
             note.duration = Duration(note_dur)
             measure.append(note)
 
@@ -121,13 +128,7 @@ class Quadlet(object):
             opts_a.remove(a)
             opts_b.remove(b)
 
-        # TODO get_simultanaeties(self.lines)
-        # TODO choose_pitches()
-
-        ##### TEMPORARY
-        for line in self.lines:
-            line['pitch'] = random.choice(line['note_opts'])
-        #####
+        self.choose_pitches(self.lines)
 
         couplet_a_lines = []
         couplet_b_lines = []
@@ -151,11 +152,49 @@ class Quadlet(object):
         durs = [d / 2.0 for d in durs]
         return durs
 
-    def find_simultanaeties(self):
-        pass
+    def get_harmonies(self, lines):
+        beat_map = defaultdict(list)
+        for line in lines:
+            r1, n, r2 = line['rhythm']
+            r1 = int(r1 * 2)
+            n = int(n * 2)
 
-    def choose_pitches(self):
-        pass
+            for beat in range(n):
+                beat = beat + r1
+                beat_map[beat].append(line)
+
+        harmonies = []
+        for beat in beat_map:
+            harmony = []
+            for line in beat_map[beat]:
+                harmony.append(line.get('pitch'))
+            harmonies.append(harmony)
+        return harmonies
+
+    def validate_harmony(self, harmony):
+        harmony = list(set([int(p % 12) for p in harmony]))
+        harmony.sort()
+        lowest = min(harmony)
+        harmony = [p - lowest for p in harmony]
+
+        interval_count = count_intervals(harmony)
+        intervals = interval_count.keys()
+        if set([1, 6, 11]).intersection(intervals):
+            return False
+
+        if harmony == [0, 4, 8]:
+            return False
+
+        return True
+
+    def choose_pitches(self, lines):
+        for line in lines:
+            line['pitch'] = random.choice(line['note_opts'])
+
+        harmonies = self.get_harmonies(lines)
+        valid = all([self.validate_harmony(h) for h in harmonies])
+        if not valid:
+            self.choose_pitches(lines)
 
 
 class Movement2(object):

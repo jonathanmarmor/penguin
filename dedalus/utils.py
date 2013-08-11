@@ -1,4 +1,6 @@
 import random
+from itertools import combinations
+from collections import Counter
 
 
 def scale(x, minimum, maximum, floor=0, ceiling=1):
@@ -69,3 +71,12 @@ def random_split(items):
         items.remove(item)
     b = random.sample(items, len_b)
     return a, b
+
+
+def count_intervals(harmony):
+    counter = Counter()
+    harmony += [12]
+    for a, b in combinations(harmony, 2):
+        counter[b - a] += 1
+    del counter[12]
+    return counter
