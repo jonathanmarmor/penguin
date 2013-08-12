@@ -34,6 +34,12 @@ def get_forms(n):
     return filter(validate, product)
 
 
+def build_form_weights_4():
+    weights = [8, 1, 8, 1]
+    forms = [(0, 1, 0, 2), (0, 1, 2, 0), (0, 1, 2, 1), (0, 1, 0)]
+    return forms, weights
+
+
 def build_form_weights(n):
     weights = []
     forms = get_forms(n)
@@ -43,18 +49,19 @@ def build_form_weights(n):
         if form[:4] == (0, 1, 2, 3):
             weights.append(1)
         else:
-            weights.append(4)
+            weights.append(8)
     return forms, weights
 
 
 def build_group_weights():
-    weights = [11, 3, 4, 2, 7]
+    weights = [11, 3, 5, 2, 9, 1]
     options = [
-        build_form_weights(4),
+        build_form_weights_4(),
         build_form_weights(5),
         build_form_weights(6),
         build_form_weights(7),
-        build_form_weights(8)
+        build_form_weights(8),
+        build_form_weights(9)
     ]
     return options, weights
 
@@ -67,5 +74,6 @@ def choose():
         forms, weights = weighted_choice(GROUP_OPTIONS, GROUP_WEIGHTS)
         return weighted_choice(forms, weights)
     except:
+        print 'warning!  song_forms.choose failed and retried.'
         return choose()
 
