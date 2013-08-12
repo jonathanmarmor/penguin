@@ -174,8 +174,8 @@ class Piece(object):
 
     def make_movements(self):
         one, two = self.choose_movement_durations()
-        self.movement_1 = movement_1.Movement1(one, self)
-        # self.movement_2 = movement_2.Movement2(two, self)
+        # self.movement_1 = movement_1.Movement1(one, self)
+        self.movement_2 = movement_2.Movement2(two, self)
 
     def choose_movement_durations(self):
         """Choose the durations of the two major sections of the piece.

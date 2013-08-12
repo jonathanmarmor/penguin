@@ -1,4 +1,5 @@
 import random
+from collections import defaultdict
 
 from music21.note import Note, Rest
 from music21.pitch import Pitch
@@ -7,8 +8,57 @@ from music21.meter import TimeSignature
 from music21.duration import Duration
 from music21.spanner import Glissando, Slur
 
-from utils import weighted_choice
+from utils import weighted_choice, count_intervals, frange
 import song_forms
+
+
+def get_harmonies(parts):
+    beat_map = defaultdict(list)
+    for part in parts:
+        beat = 0
+        for note in part['notes']:
+            dur = int(note['duration'] * 4)
+            for b in range(dur):
+                if note['pitch'] != 'rest':
+                    beat_map[beat].append(note)
+                beat += 1
+
+    harmonies = []
+    for beat in beat_map:
+        harmony = []
+        for note in beat_map[beat]:
+            harmony.append(note['pitch'])
+        harmonies.append(harmony)
+    return harmonies
+
+
+def validate_harmony(harmony):
+    harmony = list(set([int(p % 12) for p in harmony]))
+    harmony.sort()
+    lowest = min(harmony)
+    harmony = [p - lowest for p in harmony]
+
+    interval_count = count_intervals(harmony)
+    intervals = interval_count.keys()
+    if set([1, 6, 11]).intersection(intervals):
+        return False
+
+    if harmony == [0, 4, 8]:
+        return False
+
+    return True
+
+
+# def choose_pitches(parts):
+#     for part in parts:
+#         for note in part['notes']:
+#             if note['pitch'] != 'rest':
+#                 note['pitch'] = random.choice(part['note_opts'])
+
+#     harmonies = get_harmonies(parts)
+#     valid = all([validate_harmony(h) for h in harmonies])
+#     if not valid:
+#         choose_pitches(parts)
 
 
 class Song(object):
@@ -155,27 +205,6 @@ class Phrase(object):
                 'notes': [self.full_bar_rest()]
             })
 
-    def make_placeholder_soloist_instruments(self, inst_names):
-        for name in inst_names:
-            self.parts.append({
-                'instrument_name': name,
-                'notes': [{
-                    'pitch': 60.0,
-                    'duration': 0.5
-                }] * 8
-            })
-
-    def make_placeholder_accompanist_instruments(self, inst_names):
-        for name in inst_names:
-            self.parts.append({
-                'instrument_name': name,
-                'notes': [{
-                    'pitch': 60.0,
-                    'duration': 2.0
-                }] * 2
-            })
-
-
 
 class SoloPhrase(Phrase):
     def __init__(self, piece, movement, song):
@@ -184,8 +213,8 @@ class SoloPhrase(Phrase):
         self.song = song
         self.parts = []
 
-        accompanist_names = song.accompanist_names
-        soloist_names = song.soloist_names
+        accompanist_names = self.accompanist_names = song.accompanist_names
+        soloist_names = self.soloist_names = song.soloist_names
 
         resting_names = []
         for name in piece.i.names:
@@ -195,11 +224,40 @@ class SoloPhrase(Phrase):
 
         soloists_shared_notes = song.soloists_shared_notes
 
-        # TEMPORARY
-        self.make_placeholder_soloist_instruments(soloist_names)
-        self.make_placeholder_accompanist_instruments(accompanist_names)
+        self.make_accompanists(accompanist_names)
 
+        self.make_soloists(soloist_names)
 
+        self.choose_pitches(self.parts)
+
+    def make_accompanists(self, accompanist_names):
+        # Make a new rhythm for each accompanist
+        for name in accompanist_names:
+            self.parts.append({
+                'instrument_name': name,
+                'notes': AccompanimentMelody().notes
+            })
+
+    def make_soloists(self, soloist_names):
+        # Make one rhythm and assign it to all soloists
+        notes = SoloMelody().notes
+        for name in soloist_names:
+            self.parts.append({
+                'instrument_name': name,
+                'notes': notes
+            })
+
+    def choose_pitches(self, parts):
+        # Temporary
+        for part in parts:
+            for note in part['notes']:
+                if note['pitch'] != 'rest':
+                    note['pitch'] = 'rest'  # random.choice(part['note_opts'])
+
+        # harmonies = get_harmonies(parts)
+        # valid = all([validate_harmony(h) for h in harmonies])
+        # if not valid:
+        #     self.choose_pitches(parts)
 
 
 class EnsemblePhrase(Phrase):
@@ -209,17 +267,60 @@ class EnsemblePhrase(Phrase):
         self.song = song
         self.parts = []
 
-        # TEMPORARY
-        self.make_resting_instruments(piece.i.names)
+        ensemble_names = song.ensemble_names
+
+        resting_names = []
+        for name in piece.i.names:
+            if name not in ensemble_names:
+                resting_names.append(name)
+        self.make_resting_instruments(resting_names)
+
+        self.make_soloists(ensemble_names)
+
+        self.choose_pitches(self.parts)
+
+    def make_soloists(self, soloist_names):
+        # Make a new rhythm for each soloist
+        for name in soloist_names:
+            self.parts.append({
+                'instrument_name': name,
+                'notes': SoloMelody().notes,
+                'all_note_opts': self.piece.i.d[name].all_notes,
+                'note_opts': self.piece.i.d[name].all_notes
+            })
+
+    def choose_pitches(self, parts):
+        for part in parts:
+            for note in part['notes']:
+                if note['pitch'] != 'rest':
+                    note['pitch'] = random.choice(part['note_opts'])
+                    # reset note_opts to a range within a 4th in either direction of the chosen note,
+                    # but making sure that all notes are in all_note_opts
+                    part['note_opts'] = [p for p in frange(note['pitch'] - 5, note['pitch'] + 6) if p in part['all_note_opts']]
+        print parts
 
 
-# class SoloMelody(object):
-#     pass
+        harmonies = get_harmonies(parts)
+        valid = all([validate_harmony(h) for h in harmonies])
+        if not valid:
+            self.choose_pitches(parts)
 
 
-# class AccompanimentMelody(object):
-#     pass
 
+class SoloMelody(object):
+    def __init__(self):
+        self.notes = [{
+            'pitch': None,
+            'duration': 0.5
+        }] * 8
+
+
+class AccompanimentMelody(object):
+    def __init__(self):
+        self.notes = [{
+            'pitch': None,
+            'duration': 2.0
+        }] * 2
 
 
 class Movement1(object):
