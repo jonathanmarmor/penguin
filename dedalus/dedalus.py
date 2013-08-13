@@ -14,6 +14,7 @@ from music21.metadata import Metadata
 from music21.instrument import (Piccolo, SopranoSaxophone, Viola, Violoncello,
     Trombone, ElectricGuitar)
 from music21.layout import StaffGroup
+from music21.tempo import MetronomeMark
 
 from utils import GOLDEN_MEAN, scale, frange
 import movement_1
@@ -149,6 +150,8 @@ class Piece(object):
         [score.insert(0, part) for part in self.parts.l]
         score.insert(0, StaffGroup(self.parts.l))
 
+        score.insert(0, MetronomeMark(number=120))
+
         return score
 
     def get_metadata(self, timestamp, movement_number=None, movement_name=None):
@@ -174,7 +177,7 @@ class Piece(object):
 
     def make_movements(self):
         one, two = self.choose_movement_durations()
-        # self.movement_1 = movement_1.Movement1(one, self)
+        self.movement_1 = movement_1.Movement1(one, self)
         self.movement_2 = movement_2.Movement2(two, self)
 
     def choose_movement_durations(self):

@@ -47,7 +47,7 @@ def divide(dur, units):
     return result
 
 
-def fill(dur):
+def fill(dur, min_note_dur=1):
     """put a single duration within a larger duration with a rest at the beggining, end, or both"""
     note_dur = random.randint(1, dur - 1)
     start = random.randint(0, dur - note_dur)
