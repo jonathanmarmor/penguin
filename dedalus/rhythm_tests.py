@@ -36,8 +36,17 @@ def bar1():
 
 def notate_measure(notes):
     ts = TimeSignature('4/4')
-    # ts.beatSequence.partition(1)
+    ts.beatSequence.partition(4)
+    print ts.beatSequence
+
+    ts.beamSequence.partition(4)
+    print ts.beamSequence
+
+
+
+
     # ts.beatSequence[0] = ts.beatSequence[0].subdivide(['1/2', '1/2'])
+
 
     # ts.beatSequence[0] = ts.beatSequence[0].subdivide(2)
     # ts.beatSequence[1] = ts.beatSequence[1].subdivide(2)
@@ -45,6 +54,8 @@ def notate_measure(notes):
     m = Measure()
     m.timeSignature = ts
     [m.append(n) for n in notes]
+
+    m.sliceByBeat(inPlace=True)
     return m
 
 

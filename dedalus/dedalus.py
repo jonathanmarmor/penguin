@@ -135,6 +135,7 @@ class Piece(object):
             self.choose_piece_duration()
             self.make_movements()
             self.choose_when_quarter_tones_start()
+            self.fix_rhythm_notation()
 
     def show(self):
         self.score.show()
@@ -205,10 +206,13 @@ class Piece(object):
         # in quarter notes at 120 beats per minute (ie, half seconds)
         self.quarter_tones_start = scale(random.random(), 0, 1, 120 * 2, 120 * 4)
 
-
+    def fix_rhythm_notation(self):
+        for part in self.parts.l:
+            part.makeBeams()
 
 
 if __name__ == '__main__':
+    print 'STARTING!!!', '*' * 40
     show = True
     if 'ranges' in sys.argv:
         piece = Piece(ranges=True)

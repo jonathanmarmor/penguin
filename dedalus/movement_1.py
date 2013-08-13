@@ -8,7 +8,7 @@ from music21.meter import TimeSignature
 from music21.duration import Duration
 from music21.spanner import Glissando, Slur
 
-from utils import weighted_choice, count_intervals, frange, fill, divide
+from utils import weighted_choice, count_intervals, frange, fill, divide, split_at_beats, join_quarters
 import song_forms
 
 
@@ -138,7 +138,29 @@ class Song(object):
                 measure = Measure()
                 if movement.first_measure:
                     ts = TimeSignature('4/4')
+
+                    # ts.beatSequence = ts.beatSequence.subdivide(4)
+                    ts.beamSequence = ts.beamSequence.subdivide(4)
+
+
+                    # ts.beatSequence.partitionByList(subdivide(self.duration, 4))
+                    # for i, b in enumerate(ts.beatSequence):
+                    #     if b.duration.quarterLength == 4:
+                    #         ts.beatSequence[i] = b.subdivide(2)
+                    #         # ts.beatSequence[i][0] = b.subdivide(2)
+                    #         # ts.beatSequence[i][1] = b.subdivide(2)
+                    #     elif b.duration.quarterLength == 3:
+                    #         ts.beatSequence[i] = b.subdivideByList([2, 1])
+                    #         # ts.beatSequence[i][0] = ts.beatSequence[i].subdivide(2)
+                    #     elif b.duration.quarterLength == 2:
+                    #         ts.beatSequence[i] = b.subdivide(2)
+
+
+
+
                     measure.timeSignature = ts
+
+                self.fix_durations(part['notes'])
 
                 for note in part['notes']:
                     if note['pitch'] == 'rest':
@@ -154,11 +176,35 @@ class Song(object):
                         # TODO add glissandos
                         # TODO add -50 cent marks
 
-                    n.duration = Duration(note['duration'])
+                    d = Duration()
+                    d.fill(note['durations'])
+                    n.duration = d
 
                     measure.append(n)
+
+                # if len(measure.notesAndRests) > 1:
+                #     measure.sliceByBeat(inPlace=True)
+
                 piece.parts.d[part['instrument_name']].append(measure)
             movement.first_measure = False
+
+    def fix_durations(self, notes):
+        print
+        durations = [note['duration'] for note in notes]
+        print 'durations:'
+        print durations
+
+        components_list = split_at_beats(durations)
+        print 'split at beats:'
+        print components_list
+
+        components_list = [join_quarters(note_components) for note_components in components_list]
+        print 'quarters joined:'
+        print components_list
+
+        for note, components in zip(notes, components_list):
+            note['durations'] = components
+
 
 
 class Phrase(object):

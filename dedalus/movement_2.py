@@ -30,7 +30,7 @@ class Phrase(object):
 
             measure = Measure()
             if self.first and quadlet.previous_phrase_duration != self.duration:
-                ts = TimeSignature('{}/4'.format(self.duration))
+                ts = TimeSignature('{}/4'.format(self.duration), self.duration)
 
                 # ts.beatSequence.subdivideNestedHierarchy(3)
 
@@ -83,7 +83,7 @@ class Phrase(object):
 
             measure = Measure()
             if self.first and quadlet.previous_phrase_duration != self.duration:
-                ts = TimeSignature('{}/4'.format(self.duration))
+                ts = TimeSignature('{}/4'.format(self.duration), self.duration)
 
                 # ts.beatSequence.subdivideNestedHierarchy(3)
 
