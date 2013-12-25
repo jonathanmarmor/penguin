@@ -138,7 +138,13 @@ def join_quarters(dur_components):
     for key, group in groupby(dur_components):
         new_dur = key
         len_group = len(list(group))
-        if key == 1.0 and len_group > 1:
-            new_dur = float(len_group)
-        new_durs.append(new_dur)
+        if len_group > 1:
+            if key == 1.0:
+                new_dur = float(len_group)
+            else:
+                new_dur = [new_dur] * len_group
+        if type(new_dur) == list:
+            new_durs.extend(new_dur)
+        else:
+            new_durs.append(new_dur)
     return new_durs

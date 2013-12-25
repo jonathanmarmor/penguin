@@ -7,7 +7,7 @@ from music21.duration import Duration
 from music21.note import Note, Rest
 from music21.pitch import Pitch
 
-from utils import fill, count_intervals, subdivide
+from utils import fill, count_intervals, subdivide, split_at_beats, join_quarters
 
 
 class Phrase(object):
@@ -32,8 +32,6 @@ class Phrase(object):
             if self.first and quadlet.previous_phrase_duration != self.duration:
                 ts = TimeSignature('{}/4'.format(self.duration), self.duration)
 
-                # ts.beatSequence.subdivideNestedHierarchy(3)
-
                 # ts.beatSequence.partitionByList(subdivide(self.duration, 4))
                 # for i, b in enumerate(ts.beatSequence):
                 #     if b.duration.quarterLength == 4:
@@ -49,27 +47,67 @@ class Phrase(object):
 
             r1_dur, note_dur, r2_dur = line['rhythm']
 
+            line['notes'] = []
+
             if r1_dur > 0:
-                r1 = Rest()
-                r1.duration = Duration(r1_dur)
-                measure.append(r1)
+                line['notes'].append({
+                    'duration': r1_dur,
+                    'pitch': 'rest'
+                })
 
-            p = Pitch(line['pitch'])
-            # Force all flats
-            if p.accidental.name == 'sharp':
-                p = p.getEnharmonic()
-
-            note = Note(p)
-            note.duration = Duration(note_dur)
-            measure.append(note)
+            line['notes'].append({
+                'duration': note_dur,
+                'pitch': line['pitch']
+            })
 
             if r2_dur > 0:
-                r2 = Rest()
-                r2.duration = Duration(r2_dur)
-                measure.append(r2)
+                line['notes'].append({
+                    'duration': r2_dur,
+                    'pitch': 'rest'
+                })
 
-            # fixed_measure = measure.sliceByBeat()
-            # part.append(fixed_measure)
+            self.fix_durations(line['notes'])
+
+            for note in line['notes']:
+                if note['pitch'] == 'rest':
+                    n = Rest()
+                else:
+                    p = Pitch(note['pitch'])
+                    # Force all flats
+                    if p.accidental.name == 'sharp':
+                        p = p.getEnharmonic()
+                    n = Note(p)
+
+                    # TODO add slurs
+                    # TODO add glissandos
+                    # TODO add -50 cent marks
+
+                d = Duration()
+                d.fill(note['durations'])
+                n.duration = d
+
+                measure.append(n)
+
+
+            # if r1_dur > 0:
+            #     r1 = Rest()
+            #     r1.duration = Duration(r1_dur)
+            #     measure.append(r1)
+
+            # p = Pitch(line['pitch'])
+            # # Force all flats
+            # if p.accidental.name == 'sharp':
+            #     p = p.getEnharmonic()
+
+            # note = Note(p)
+            # note.duration = Duration(note_dur)
+            # measure.append(note)
+
+            # if r2_dur > 0:
+            #     r2 = Rest()
+            #     r2.duration = Duration(r2_dur)
+            #     measure.append(r2)
+
 
             part.append(measure)
 
@@ -108,6 +146,26 @@ class Phrase(object):
             # part.append(fixed_measure)
 
             part.append(measure)
+
+    def fix_durations(self, notes):
+        durations = [note['duration'] for note in notes]
+        a = sum(durations)
+
+        components_list_split = split_at_beats(durations)
+        b = sum([sum(d) for d in components_list_split])
+
+        components_list_joined = [join_quarters(note_components) for note_components in components_list_split]
+        c = sum([sum(d) for d in components_list_joined])
+
+        if a != b or a != c or b != c:
+            print a, b, c
+            print durations
+            print components_list_split
+            print components_list_joined
+            print
+
+        for note, components in zip(notes, components_list_joined):
+            note['durations'] = components
 
 
 class Couplet(object):

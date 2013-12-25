@@ -160,6 +160,8 @@ class Song(object):
 
                     measure.timeSignature = ts
 
+                    # ts.getBeams()
+
                 self.fix_durations(part['notes'])
 
                 for note in part['notes']:
@@ -185,24 +187,29 @@ class Song(object):
                 # if len(measure.notesAndRests) > 1:
                 #     measure.sliceByBeat(inPlace=True)
 
+                # measure.makeBeams(inPlace=True)
+
                 piece.parts.d[part['instrument_name']].append(measure)
             movement.first_measure = False
 
     def fix_durations(self, notes):
-        print
         durations = [note['duration'] for note in notes]
-        print 'durations:'
-        print durations
+        a = sum(durations)
 
-        components_list = split_at_beats(durations)
-        print 'split at beats:'
-        print components_list
+        components_list_split = split_at_beats(durations)
+        b = sum([sum(d) for d in components_list_split])
 
-        components_list = [join_quarters(note_components) for note_components in components_list]
-        print 'quarters joined:'
-        print components_list
+        components_list_joined = [join_quarters(note_components) for note_components in components_list_split]
+        c = sum([sum(d) for d in components_list_joined])
 
-        for note, components in zip(notes, components_list):
+        if a != b or a != c or b != c:
+            print a, b, c
+            print durations
+            print components_list_split
+            print components_list_joined
+            print
+
+        for note, components in zip(notes, components_list_joined):
             note['durations'] = components
 
 

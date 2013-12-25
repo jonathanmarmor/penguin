@@ -207,8 +207,15 @@ class Piece(object):
         self.quarter_tones_start = scale(random.random(), 0, 1, 120 * 2, 120 * 4)
 
     def fix_rhythm_notation(self):
+        # for part in self.parts.l:
+        #     for measure in part:
+        #         if type(measure) == Measure:
+        #             for n in measure.notesAndRests:
+        #                 print n
+
         for part in self.parts.l:
-            part.makeBeams()
+            part.makeBeams(inPlace=True)
+        # pass
 
 
 if __name__ == '__main__':
