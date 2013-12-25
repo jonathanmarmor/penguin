@@ -3,12 +3,12 @@ from collections import defaultdict
 
 from music21.note import Note, Rest
 from music21.pitch import Pitch
-from music21.stream import Stream, Measure
+from music21.stream import Measure
 from music21.meter import TimeSignature
 from music21.duration import Duration
-from music21.spanner import Glissando, Slur
+# from music21.spanner import Glissando, Slur
 
-from utils import weighted_choice, count_intervals, frange, fill, divide, split_at_beats, join_quarters
+from utils import count_intervals, frange, fill, divide, split_at_beats, join_quarters
 import song_forms
 
 
